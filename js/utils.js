@@ -1,9 +1,8 @@
-import { ref, watch } from "vue";
+import { ref, watch, onMounted, nextTick } from "vue";
 
 // 音声再生ヘルパー関数
 export const speakText = (text) => {
   if (!text) return;
-  // スラッシュで複数の正解がある場合、最初の文だけを読み上げる
   const textToSpeak = text.split("/")[0];
   const uttr = new SpeechSynthesisUtterance(textToSpeak);
   uttr.lang = "zh-CN";
@@ -15,7 +14,8 @@ export const speakText = (text) => {
 export const useWordSort = (props, emit) => {
   const poolList = ref([]);
   const answerList = ref([]);
-  const draggedItemIndex = ref(null);
+  const answerContainer = ref(null); // Sortableを適用するDOM要素
+  let sortableInstance = null;
 
   // データ初期化
   watch(
@@ -44,7 +44,7 @@ export const useWordSort = (props, emit) => {
     { immediate: true },
   );
 
-  // 単語移動処理
+  // 単語移動処理（クリック時）
   const moveWord = (wordObj, fromList, toList) => {
     speakText(wordObj.text);
     const type = props.questionData ? props.questionData[1] : null;
@@ -65,18 +65,48 @@ export const useWordSort = (props, emit) => {
     }
   };
 
-  // 並べ替え（ドラッグ＆ドロップ）処理
-  const onDragStart = (index) => {
-    draggedItemIndex.value = index;
+  // SortableJSの初期化
+  const initSortable = () => {
+    if (answerContainer.value && typeof Sortable !== "undefined") {
+      if (sortableInstance) {
+        sortableInstance.destroy();
+      }
+      sortableInstance = new Sortable(answerContainer.value, {
+        animation: 150,
+        draggable: ".word-chip", // 単語チップのみドラッグ可能
+        ghostClass: "sortable-ghost",
+        onEnd: (evt) => {
+          const oldIdx = evt.oldDraggableIndex;
+          const newIdx = evt.newDraggableIndex;
+
+          if (oldIdx !== undefined && newIdx !== undefined && oldIdx !== newIdx) {
+            // Vueの仮想DOMエラーを防ぐため、Sortableが移動したDOMを一旦元の位置に戻す
+            const itemEl = evt.item;
+            const parent = evt.from;
+            const oldDomIndex = evt.oldIndex;
+
+            parent.removeChild(itemEl);
+            if (oldDomIndex >= parent.children.length) {
+              parent.appendChild(itemEl);
+            } else {
+              parent.insertBefore(itemEl, parent.children[oldDomIndex]);
+            }
+
+            // Vueのデータを更新して再レンダリングさせる
+            const item = answerList.value.splice(oldIdx, 1)[0];
+            answerList.value.splice(newIdx, 0, item);
+            emit("update-answer", answerList.value.map((w) => w.text).join(""));
+          }
+        },
+      });
+    }
   };
 
-  const onDrop = (toIndex) => {
-    if (draggedItemIndex.value === null) return;
-    const item = answerList.value.splice(draggedItemIndex.value, 1)[0];
-    answerList.value.splice(toIndex, 0, item);
-    emit("update-answer", answerList.value.map((w) => w.text).join(""));
-    draggedItemIndex.value = null;
-  };
+  onMounted(() => {
+    nextTick(() => {
+      initSortable();
+    });
+  });
 
-  return { poolList, answerList, moveWord, onDragStart, onDrop };
+  return { poolList, answerList, answerContainer, moveWord };
 };
