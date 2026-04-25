@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>中国語問題集</title>
+  <style>
+    :root {
+      --primary-color: #6366f1;
+      --secondary-color: #a855f7;
+      --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      --card-bg: #ffffff;
+      --text-main: #1f2937;
+      --success: #10b981;
+      --error: #ef4444;
+    }
+
+    body {
+      font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    #app {
+      max-width: 600px;
+      width: 100%;
+      background: var(--card-bg);
+      padding: 40px;
+      border-radius: 24px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      text-align: center;
+      margin-bottom: 30px;
+      background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 800;
+    }
+
+    .sheet-select {
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    select {
+      padding: 10px 20px;
+      border-radius: 12px;
+      border: 2px solid #e5e7eb;
+      background: white;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+      cursor: pointer;
+    }
+
+    select:focus {
+      border-color: var(--primary-color);
+    }
+
+    .dataContent p {
+      margin: 10px 0;
+    }
+
+    .japanese {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #4b5563;
+      margin-bottom: 20px !important;
+    }
+
+    .hanyu {
+      font-size: 1.5rem;
+      color: var(--primary-color);
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .pinyin {
+      color: #9ca3af;
+      font-style: italic;
+    }
+
+    .member {
+      background: #f9fafb;
+      border-radius: 16px;
+      padding: 15px;
+      min-height: 60px;
+      margin-bottom: 15px;
+      border: 2px dashed #e5e7eb;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .member span.word-chip {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 8px 16px;
+      cursor: pointer;
+      user-select: none;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      font-weight: 500;
+    }
+
+    .member span.word-chip:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      border-color: var(--primary-color);
+      color: var(--primary-color);
+    }
+
+    .member span.label {
+      font-size: 0.8rem;
+      color: #9ca3af;
+      width: 100%;
+      margin-bottom: 5px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .answerInput input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: 2px solid #e5e7eb;
+      font-size: 1.1rem;
+      box-sizing: border-box;
+    }
+
+    .controls {
+      margin-top: 30px;
+      text-align: center;
+    }
+
+    button {
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 12px 32px;
+      border-radius: 14px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      box-shadow: 0 4px 6px rgba(99, 102, 241, 0.3);
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    #comment {
+      margin-top: 20px;
+      font-weight: bold;
+      text-align: center;
+      min-height: 24px;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .comment-success {
+      color: var(--success);
+      font-size: 1.4rem;
+      transform: scale(1.1);
+      text-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+    }
+
+    .comment-error {
+      color: var(--error);
+      animation: shake 0.4s;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+    }
+
+    @keyframes shake {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      25% {
+        transform: translateX(-5px);
+      }
+
+      75% {
+        transform: translateX(5px);
+      }
+    }
+  </style>
+  <!-- Vue 3 ESM build and importmap for cleaner imports -->
+  <script type="importmap">
+    {
+      "imports": {
+        "vue": "https://unpkg.com/vue@3/dist/vue.esm-browser.js"
+      }
+    }
+  </script>
+</head>
+
+<body>
+
+  <div id="app">
+    <h1>中国語　問題集</h1>
+
+    <!-- ローディング表示 -->
+    <div v-if="isLoading" class="loading">
+      スプレッドシートからデータを読み込み中...
+    </div>
+
+    <div v-else>
+      <!-- シート選択 -->
+      <div class="sheet-select">
+        <label for="sheet">シート選択：</label>
+        <select id="sheet" v-model="selectedSheetIndex" @change="onSheetChange">
+          <option v-for="(sheet, index) in sheets" :value="index" :key="index">{{ sheet }}</option>
+        </select>
+      </div>
+
+      <div id="container" v-if="currentQuestion">
+        <component :is="currentComponent" :question-data="currentQuestion" :is-checked="isChecked"
+          @update-answer="handleAnswerUpdate"></component>
+      </div>
+
+      <p id="comment" :class="commentClass">{{ comment }}</p>
+      <div class="controls">
+        <button v-if="!isChecked && currentQuestion" @click="checkAnswer">チェック</button>
+        <button v-if="isChecked && currentQuestion" @click="nextQuestion">次の問題</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createApp, ref, computed, onMounted } from 'vue';
+    import { components } from './js/index.js';
+
+    // ★ここにGASでデプロイしたWebアプリのURLを貼り付けてください
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyzFfeu2oD8BcLw1_LgQVB5P7ga1G_YeXncI3RyvBO_kTrrg5hyUGpzPbUDYuOnxKXx/exec';
+
+    // Vueアプリケーションの作成
+    createApp({
+      components,
+      setup() {
+        const isLoading = ref(true);
+        const sheets = ref([]);
+        const allQuestions = ref([]);
+        const selectedSheetIndex = ref(0);
+
+        const currentIndex = ref(0);
+        const isChecked = ref(false);
+        const comment = ref('');
+        const currentAnswer = ref('');
+
+        // 初期処理：GASからデータを取得
+        onMounted(async () => {
+          try {
+            const response = await fetch(GAS_URL);
+            const data = await response.json();
+
+            // data[0] はシート名の配列、data[1]以降が各シートのデータ
+            sheets.value = data[0];
+            allQuestions.value = data.slice(1);
+
+            isLoading.value = false;
+          } catch (error) {
+            console.error('データの取得に失敗しました:', error);
+            comment.value = 'データの読み込みに失敗しました。GASのURLを確認してください。';
+            isLoading.value = false;
+          }
+        });
+
+        // シートが変更された時の処理
+        const onSheetChange = () => {
+          currentIndex.value = 0;
+          isChecked.value = false;
+          comment.value = '';
+          currentAnswer.value = '';
+        };
+
+        // 選択中のシートの有効な問題リスト（空行を除外）
+        const currentQuestionList = computed(() => {
+          if (allQuestions.value.length === 0) return [];
+          return allQuestions.value[selectedSheetIndex.value].filter(q => q[0] !== "");
+        });
+
+        // 現在の問題データ
+        const currentQuestion = computed(() => {
+          if (currentQuestionList.value.length === 0) return null;
+          return currentQuestionList.value[currentIndex.value];
+        });
+
+        // 問題タイプに応じてコンポーネント名を決定
+        const currentComponent = computed(() => {
+          if (!currentQuestion.value) return null;
+          const type = currentQuestion.value[1]; // インデックス1がパターン(A, B, C...)
+
+          // 大文字 A-Z の範囲内かチェックし、かつコンポーネントが存在するか確認
+          const componentName = `Question${type}`;
+          if (type >= 'A' && type <= 'Z' && components[componentName]) {
+            return componentName;
+          }
+
+          return 'QuestionA';
+        });
+
+        const commentClass = computed(() => ({
+          'comment-success': comment.value.includes('よくできました'),
+          'comment-error': comment.value.includes('間違っています')
+        }));
+
+        const handleAnswerUpdate = (ans) => {
+          currentAnswer.value = ans;
+        };
+
+        const checkAnswer = () => {
+          isChecked.value = true;
+          
+          const type = currentQuestion.value[1]; // パターン(A, B, C, D, E...)を取得
+          let isCorrect = false;
+
+          if (type === 'E') {
+            // タイプEの場合はピンイン（インデックス3）と比較
+            const correctAnswers = currentQuestion.value[3].split('/');
+            if (correctAnswers.includes(currentAnswer.value)) {
+              isCorrect = true;
+            }
+          } else {
+            // それ以外は中国語文章（インデックス2）と比較
+            const correctAnswers = currentQuestion.value[2].split('/');
+            if (correctAnswers.includes(currentAnswer.value)) {
+              isCorrect = true;
+            }
+          }
+
+          if (isCorrect) {
+            comment.value = '大変よくできました。';
+          } else {
+            comment.value = '間違っています！　もっとしっかり勉強して。';
+          }
+        };
+
+        const nextQuestion = () => {
+          currentIndex.value++;
+          if (currentIndex.value >= currentQuestionList.value.length) {
+            currentIndex.value = 0; // 最後まで行ったら最初に戻る
+          }
+          // 状態のリセット
+          isChecked.value = false;
+          comment.value = '';
+          currentAnswer.value = '';
+        };
+
+        return {
+          isLoading,
+          sheets,
+          selectedSheetIndex,
+          onSheetChange,
+          currentIndex,
+          currentQuestion,
+          currentComponent,
+          isChecked,
+          commentClass,
+          comment,
+          handleAnswerUpdate,
+          checkAnswer,
+          nextQuestion
+        };
+      }
+    }).mount('#app');
+  </script>
+</body>
+
+</html>
