@@ -50,7 +50,7 @@ export const useWordSort = (props, emit) => {
     const type = props.questionData ? props.questionData[1] : null;
 
     // タイプDとEの場合は、回答欄に1つしか置けないように制御
-    if (toList === answerList.value && (type === "D" || type === "E")) {
+    if (toList === answerList.value && (type === "D" || type === "E" || type === "I")) {
       while (answerList.value.length > 0) {
         const removed = answerList.value.pop();
         poolList.value.push(removed);
