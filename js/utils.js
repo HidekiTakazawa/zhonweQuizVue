@@ -113,7 +113,7 @@ export const useWordSort = (props, emit) => {
 // --- ここから下を追加 ---
 
 // 句読点や記号を除去する関数
-const cleanText = (text) => {
+export const cleanText = (text) => {
   return text.replace(/[，。？！、,.\?!]/g, '').trim();
 };
 

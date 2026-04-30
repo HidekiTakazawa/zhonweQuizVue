@@ -261,7 +261,7 @@
   <script type="module">
     import { createApp, ref, computed, onMounted } from 'vue';
     import { components } from './js/index.js';
-    import { evaluatePronunciation } from './js/utils.js'; // ★追加
+    import { evaluatePronunciation, cleanText } from './js/utils.js'; // ★追加
 
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbyzFfeu2oD8BcLw1_LgQVB5P7ga1G_YeXncI3RyvBO_kTrrg5hyUGpzPbUDYuOnxKXx/exec';
 
@@ -350,6 +350,41 @@
             
             comment.value = `スコア: ${result.score}点 - ${result.message}`;
             isSuccess.value = result.score >= 80; // 80点以上で成功扱い
+            return;
+          }
+          // ★ タイプL（質問への回答テスト）の評価ロジック
+          if (type === 'L') {
+            if (!currentAnswer.value) {
+              comment.value = '音声が入力されていません。';
+              isSuccess.value = false;
+              return;
+            }
+            
+            // F列以降のデータ（模範解答リスト）を取得
+            const answersData = currentQuestion.value.slice(5).filter(w => w !== undefined && w !== null && String(w).trim() !== '');
+            
+            let matchedComment = null;
+            const cleanSpoken = cleanText(currentAnswer.value); // ユーザーの音声入力から句読点を除去
+
+            // 模範解答を1つずつチェック
+            for (const data of answersData) {
+              const parts = String(data).split('/');
+              const modelAnswer = cleanText(parts[0]); // 模範解答から句読点を除去
+              const modelComment = parts[1] || '正解です！'; // コメントがない場合のデフォルト
+              
+              if (modelAnswer === cleanSpoken) {
+                matchedComment = modelComment;
+                break; // 一致するものが見つかったらループ終了
+              }
+            }
+
+            if (matchedComment) {
+              comment.value = matchedComment;
+              isSuccess.value = true;
+            } else {
+              comment.value = '間違っています！　もっとしっかり勉強して。';
+              isSuccess.value = false;
+            }
             return;
           }
 
