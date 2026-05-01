@@ -208,15 +208,33 @@
     }
 
     @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-5px); }
-      75% { transform: translateX(5px); }
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      25% {
+        transform: translateX(-5px);
+      }
+
+      75% {
+        transform: translateX(5px);
+      }
     }
 
     @keyframes pulse {
-      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-      70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+      0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+      }
+
+      70% {
+        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+      }
     }
   </style>
   <script type="importmap">
@@ -315,7 +333,7 @@
 
         const currentComponent = computed(() => {
           if (!currentQuestion.value) return null;
-          const type = currentQuestion.value[1]; 
+          const type = currentQuestion.value[1];
 
           const componentName = `Question${type}`;
           if (type >= 'A' && type <= 'Z' && components[componentName]) {
@@ -336,7 +354,7 @@
 
         const checkAnswer = () => {
           isChecked.value = true;
-          const type = currentQuestion.value[1]; 
+          const type = currentQuestion.value[1];
 
           // ★ タイプH（発音テスト）の評価ロジック
           if (type === 'H') {
@@ -347,7 +365,7 @@
             }
             const targetText = currentQuestion.value[2].split('/')[0];
             const result = evaluatePronunciation(targetText, currentAnswer.value);
-            
+
             comment.value = `スコア: ${result.score}点 - ${result.message}`;
             isSuccess.value = result.score >= 80; // 80点以上で成功扱い
             return;
@@ -359,10 +377,10 @@
               isSuccess.value = false;
               return;
             }
-            
+
             // F列以降のデータ（模範解答リスト）を取得
             const answersData = currentQuestion.value.slice(5).filter(w => w !== undefined && w !== null && String(w).trim() !== '');
-            
+
             let matchedComment = null;
             const cleanSpoken = cleanText(currentAnswer.value); // ユーザーの音声入力から句読点を除去
 
@@ -371,7 +389,7 @@
               const parts = String(data).split('/');
               const modelAnswer = cleanText(parts[0]); // 模範解答から句読点を除去
               const modelComment = parts[1] || '正解です！'; // コメントがない場合のデフォルト
-              
+
               if (modelAnswer === cleanSpoken) {
                 matchedComment = modelComment;
                 break; // 一致するものが見つかったらループ終了
@@ -387,13 +405,30 @@
             }
             return;
           }
+          if (type === 'M') {
+            let isCorrect = false;
+            console.log(currentAnswer.value, currentAnswer.value.split('/')[0]);
+            console.log(currentQuestion.value[2].split('/'));
+            const correctAnswers = currentQuestion.value[2].split('/');
+            if (correctAnswers.includes(currentAnswer.value.split('/')[0])) {
+              isCorrect = true;
+              comment.value = '大変よくできました。';
+              isSuccess.value = true;
+            } else {
+              comment.value = '間違っています！　もっとしっかり勉強して。';
+              isSuccess.value = false;
 
+            }
+            return;
+
+          }
           // 既存の評価ロジック（A〜G, I, Wなど）
           let isCorrect = false;
           if (type === 'E') {
             const correctAnswers = currentQuestion.value[3].split('/');
             if (correctAnswers.includes(currentAnswer.value)) {
               isCorrect = true;
+
             }
           } else {
             const correctAnswers = currentQuestion.value[2].split('/');
@@ -414,7 +449,7 @@
         const nextQuestion = () => {
           currentIndex.value++;
           if (currentIndex.value >= currentQuestionList.value.length) {
-            currentIndex.value = 0; 
+            currentIndex.value = 0;
           }
           isChecked.value = false;
           comment.value = '';

@@ -46,11 +46,13 @@ export const useWordSort = (props, emit) => {
 
   // 単語移動処理（クリック時）
   const moveWord = (wordObj, fromList, toList) => {
-    speakText(wordObj.text);
     const type = props.questionData ? props.questionData[1] : null;
+    if (type !== "E") {
+      speakText(wordObj.text);
 
+    }
     // タイプDとEの場合は、回答欄に1つしか置けないように制御
-    if (toList === answerList.value && (type === "D" || type === "E" || type === "I" || type === "J" || type === "K")) {
+    if (toList === answerList.value && (type === "D" || type === "E" || type === "I" || type === "J" || type === "K"　|| type === "M")) {
       while (answerList.value.length > 0) {
         const removed = answerList.value.pop();
         poolList.value.push(removed);
