@@ -1,25 +1,42 @@
-import { ref, watch } from "vue";
+import { ref, watch, onMounted, nextTick } from "vue";
 import { useWordSort, speakText } from "./utils.js";
 
 export default {
   props: ["questionData", "isChecked"],
-  emits: ["update-answer"],
+  emits: ["update-answer", "submit"],
   setup(props, { emit }) {
     const { poolList } = useWordSort(props, emit);
     const textAnswer = ref("");
+    const inputRef = ref(null); // ★ 入力ボックスのDOMを参照するための変数
 
     watch(textAnswer, (newVal) => {
       emit("update-answer", newVal);
     });
 
+    // 問題が切り替わったときの処理
     watch(
       () => props.questionData,
       () => {
         textAnswer.value = "";
+        // ★ 次の問題に進んだときにフォーカスを当てる
+        nextTick(() => {
+          if (inputRef.value && !props.isChecked) {
+            inputRef.value.focus();
+          }
+        });
       },
     );
 
-    return { poolList, speakText, textAnswer };
+    // ★ 初回表示時（マウント時）にもフォーカスを当てる
+    onMounted(() => {
+      nextTick(() => {
+        if (inputRef.value && !props.isChecked) {
+          inputRef.value.focus();
+        }
+      });
+    });
+
+    return { poolList, speakText, textAnswer, inputRef };
   },
   template: `
     <div class="dataContent">
@@ -31,7 +48,8 @@ export default {
         <span v-for="word in poolList" :key="word.id" class="word-chip">{{ word.text }}</span>
       </div>
       <div class="answerInput">
-        <input type="text" v-model="textAnswer">
+        <!-- ★ ref="inputRef" を追加 -->
+        <input type="text" ref="inputRef" v-model="textAnswer" @keyup.enter="$emit('submit')" :disabled="isChecked">
       </div>
     </div>`,
 };

@@ -5,9 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>中国語問題集</title>
-  <!-- SortableJS の読み込み -->
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-  <!-- pinyin-pro の読み込み -->
   <script src="https://unpkg.com/pinyin-pro"></script>
   <style>
     :root {
@@ -52,7 +50,7 @@
     }
 
     .sheet-select {
-      margin-bottom: 30px;
+      margin-bottom: 20px;
       text-align: center;
     }
 
@@ -67,32 +65,42 @@
       cursor: pointer;
     }
 
-    select:focus {
-      border-color: var(--primary-color);
-    }
-
-    .dataContent p {
-      margin: 10px 0;
-    }
-
-    .japanese {
-      font-size: 1.2rem;
-      font-weight: 600;
-      color: #4b5563;
-      margin-bottom: 20px !important;
-    }
-
-    .hanyu {
-      font-size: 1.5rem;
-      color: var(--primary-color);
-      cursor: pointer;
+    /* ★ 問題番号表示のスタイル */
+    .progress-text {
+      text-align: left;
+      font-size: 0.9rem;
+      color: #6b7280;
       font-weight: bold;
+      margin-bottom: 15px;
+      border-bottom: 2px solid #f3f4f6;
+      padding-bottom: 10px;
     }
 
-    .pinyin {
-      color: #9ca3af;
-      font-style: italic;
+    /* ★ リザルト画面のスタイル */
+    .result-screen {
+      text-align: center;
+      padding: 20px 0;
     }
+    .result-screen h2 {
+      color: var(--primary-color);
+      font-size: 2rem;
+    }
+    .result-screen p {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #4b5563;
+    }
+    .perfect-msg {
+      color: var(--success);
+      font-size: 1.5rem;
+      margin: 20px 0;
+      animation: pulse 2s infinite;
+    }
+
+    .dataContent p { margin: 10px 0; }
+    .japanese { font-size: 1.2rem; font-weight: 600; color: #4b5563; margin-bottom: 20px !important; }
+    .hanyu { font-size: 1.5rem; color: var(--primary-color); cursor: pointer; font-weight: bold; }
+    .pinyin { color: #9ca3af; font-style: italic; }
 
     .member {
       background: #f9fafb;
@@ -150,10 +158,7 @@
       box-sizing: border-box;
     }
 
-    .controls {
-      margin-top: 30px;
-      text-align: center;
-    }
+    .controls { margin-top: 30px; text-align: center; }
 
     button {
       background: var(--primary-color);
@@ -168,19 +173,11 @@
       box-shadow: 0 4px 6px rgba(99, 102, 241, 0.3);
     }
 
-    button:hover {
-      opacity: 0.9;
-    }
+    button:hover { opacity: 0.9; }
+    button:active { transform: scale(0.98); }
+    button:disabled { background: #9ca3af; cursor: not-allowed; box-shadow: none; }
 
-    button:active {
-      transform: scale(0.98);
-    }
-
-    /* 音声入力ボタン用スタイル */
-    button.recording {
-      background: #ef4444;
-      animation: pulse 1.5s infinite;
-    }
+    button.recording { background: #ef4444; animation: pulse 1.5s infinite; }
 
     #comment {
       margin-top: 20px;
@@ -197,44 +194,19 @@
       text-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
     }
 
-    .comment-error {
-      color: var(--error);
-      animation: shake 0.4s;
-    }
-
-    .loading {
-      text-align: center;
-      padding: 40px;
-    }
+    .comment-error { color: var(--error); animation: shake 0.4s; }
+    .loading { text-align: center; padding: 40px; }
 
     @keyframes shake {
-
-      0%,
-      100% {
-        transform: translateX(0);
-      }
-
-      25% {
-        transform: translateX(-5px);
-      }
-
-      75% {
-        transform: translateX(5px);
-      }
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
     }
 
     @keyframes pulse {
-      0% {
-        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-      }
-
-      70% {
-        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
-      }
-
-      100% {
-        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
-      }
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
     }
   </style>
   <script type="importmap">
@@ -263,15 +235,33 @@
         </select>
       </div>
 
-      <div id="container" v-if="currentQuestion">
-        <component :is="currentComponent" :question-data="currentQuestion" :is-checked="isChecked"
-          @update-answer="handleAnswerUpdate"></component>
+      <!-- ★ リザルト画面 -->
+      <div v-if="isFinished" class="result-screen">
+        <h2>テスト終了！</h2>
+        <p>正解数： {{ correctCount }} / {{ currentQuestionList.length }}</p>
+        <p>正答率： {{ Math.round((correctCount / currentQuestionList.length) * 100) }}%</p>
+        <h3 v-if="correctCount === currentQuestionList.length" class="perfect-msg">🎉 おめでとうございます！満点です！ 🎉</h3>
+        <button @click="onSheetChange" style="margin-top: 20px;">もう一度解く</button>
       </div>
 
-      <p id="comment" :class="commentClass">{{ comment }}</p>
-      <div class="controls">
-        <button v-if="!isChecked && currentQuestion" @click="checkAnswer">チェック</button>
-        <button v-if="isChecked && currentQuestion" @click="nextQuestion">次の問題</button>
+      <!-- 問題画面 -->
+      <div v-else>
+        <!-- ★ 問題番号表示 -->
+        <div v-if="currentQuestion" class="progress-text">
+          問題番号： {{ currentIndex + 1 }} / {{ currentQuestionList.length }}
+        </div>
+
+        <div id="container" v-if="currentQuestion">
+          <!-- ★ @submit="checkAnswer" を追加 -->
+          <component :is="currentComponent" :question-data="currentQuestion" :is-checked="isChecked"
+            @update-answer="handleAnswerUpdate" @submit="checkAnswer"></component>
+        </div>
+
+        <p id="comment" :class="commentClass">{{ comment }}</p>
+        <div class="controls">
+          <button v-if="!isChecked && currentQuestion" @click="checkAnswer">チェック</button>
+          <button v-if="isChecked && currentQuestion" @click="nextQuestion">次の問題</button>
+        </div>
       </div>
     </div>
   </div>
@@ -279,7 +269,7 @@
   <script type="module">
     import { createApp, ref, computed, onMounted } from 'vue';
     import { components } from './js/index.js';
-    import { evaluatePronunciation, cleanText } from './js/utils.js'; // ★追加
+    import { evaluatePronunciation, cleanText } from './js/utils.js';
 
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbyzFfeu2oD8BcLw1_LgQVB5P7ga1G_YeXncI3RyvBO_kTrrg5hyUGpzPbUDYuOnxKXx/exec';
 
@@ -295,7 +285,11 @@
         const isChecked = ref(false);
         const comment = ref('');
         const currentAnswer = ref('');
-        const isSuccess = ref(false); // 成功状態を管理
+        const isSuccess = ref(false);
+        
+        // ★ 追加：成績管理用の変数
+        const correctCount = ref(0);
+        const isFinished = ref(false);
 
         onMounted(async () => {
           try {
@@ -319,6 +313,9 @@
           comment.value = '';
           currentAnswer.value = '';
           isSuccess.value = false;
+          // ★ リセット
+          correctCount.value = 0;
+          isFinished.value = false;
         };
 
         const currentQuestionList = computed(() => {
@@ -333,7 +330,7 @@
 
         const currentComponent = computed(() => {
           if (!currentQuestion.value) return null;
-          const type = currentQuestion.value[1];
+          const type = currentQuestion.value[1]; 
 
           const componentName = `Question${type}`;
           if (type >= 'A' && type <= 'Z' && components[componentName]) {
@@ -353,59 +350,52 @@
         };
 
         const checkAnswer = () => {
+          // ★ Enter連打などで複数回判定されるのを防ぐ
+          if (isChecked.value) return;
+          
           isChecked.value = true;
-          const type = currentQuestion.value[1];
+          const type = currentQuestion.value[1]; 
 
-          // ★ タイプH（発音テスト）の評価ロジック
           if (type === 'H') {
             if (!currentAnswer.value) {
               comment.value = '音声が入力されていません。';
               isSuccess.value = false;
-              return;
+            } else {
+              const targetText = currentQuestion.value[2].split('/')[0];
+              const result = evaluatePronunciation(targetText, currentAnswer.value);
+              comment.value = `スコア: ${result.score}点 - ${result.message}`;
+              isSuccess.value = result.score >= 80;
             }
-            const targetText = currentQuestion.value[2].split('/')[0];
-            const result = evaluatePronunciation(targetText, currentAnswer.value);
-
-            comment.value = `スコア: ${result.score}点 - ${result.message}`;
-            isSuccess.value = result.score >= 80; // 80点以上で成功扱い
-            return;
-          }
-          // ★ タイプL（質問への回答テスト）の評価ロジック
-          if (type === 'L') {
+          } 
+          else if (type === 'L') {
             if (!currentAnswer.value) {
               comment.value = '音声が入力されていません。';
               isSuccess.value = false;
-              return;
-            }
+            } else {
+              const answersData = currentQuestion.value.slice(5).filter(w => w !== undefined && w !== null && String(w).trim() !== '');
+              let matchedComment = null;
+              const cleanSpoken = cleanText(currentAnswer.value);
 
-            // F列以降のデータ（模範解答リスト）を取得
-            const answersData = currentQuestion.value.slice(5).filter(w => w !== undefined && w !== null && String(w).trim() !== '');
+              for (const data of answersData) {
+                const parts = String(data).split('/');
+                const modelAnswer = cleanText(parts[0]);
+                const modelComment = parts[1] || '正解です！';
+                
+                if (modelAnswer === cleanSpoken) {
+                  matchedComment = modelComment;
+                  break;
+                }
+              }
 
-            let matchedComment = null;
-            const cleanSpoken = cleanText(currentAnswer.value); // ユーザーの音声入力から句読点を除去
-
-            // 模範解答を1つずつチェック
-            for (const data of answersData) {
-              const parts = String(data).split('/');
-              const modelAnswer = cleanText(parts[0]); // 模範解答から句読点を除去
-              const modelComment = parts[1] || '正解です！'; // コメントがない場合のデフォルト
-
-              if (modelAnswer === cleanSpoken) {
-                matchedComment = modelComment;
-                break; // 一致するものが見つかったらループ終了
+              if (matchedComment) {
+                comment.value = matchedComment;
+                isSuccess.value = true;
+              } else {
+                comment.value = '間違っています！　もっとしっかり勉強して。';
+                isSuccess.value = false;
               }
             }
-
-            if (matchedComment) {
-              comment.value = matchedComment;
-              isSuccess.value = true;
-            } else {
-              comment.value = '間違っています！　もっとしっかり勉強して。';
-              isSuccess.value = false;
-            }
-            return;
-          }
-          if (type === 'M') {
+          } else if (type === 'M') {
             let isCorrect = false;
             console.log(currentAnswer.value, currentAnswer.value.split('/')[0]);
             console.log(currentQuestion.value[2].split('/'));
@@ -419,42 +409,49 @@
               isSuccess.value = false;
 
             }
-            return;
+           
 
-          }
-          // 既存の評価ロジック（A〜G, I, Wなど）
-          let isCorrect = false;
-          if (type === 'E') {
-            const correctAnswers = currentQuestion.value[3].split('/');
-            if (correctAnswers.includes(currentAnswer.value)) {
-              isCorrect = true;
-
+          } 
+          else {
+            let isCorrect = false;
+            if (type === 'E') {
+              const correctAnswers = currentQuestion.value[3].split('/');
+              if (correctAnswers.includes(currentAnswer.value)) {
+                isCorrect = true;
+              }
+            } else {
+              const correctAnswers = currentQuestion.value[2].split('/');
+              if (correctAnswers.includes(currentAnswer.value)) {
+                isCorrect = true;
+              }
             }
-          } else {
-            const correctAnswers = currentQuestion.value[2].split('/');
-            if (correctAnswers.includes(currentAnswer.value)) {
-              isCorrect = true;
+
+            if (isCorrect) {
+              comment.value = '大変よくできました。';
+              isSuccess.value = true;
+            } else {
+              comment.value = '間違っています！　もっとしっかり勉強して。';
+              isSuccess.value = false;
             }
           }
 
-          if (isCorrect) {
-            comment.value = '大変よくできました。';
-            isSuccess.value = true;
-          } else {
-            comment.value = '間違っています！　もっとしっかり勉強して。';
-            isSuccess.value = false;
+          // ★ 正解ならカウントアップ
+          if (isSuccess.value) {
+            correctCount.value++;
           }
         };
 
         const nextQuestion = () => {
-          currentIndex.value++;
-          if (currentIndex.value >= currentQuestionList.value.length) {
-            currentIndex.value = 0;
+          // ★ 最後の問題だった場合、リザルト画面へ移行
+          if (currentIndex.value + 1 >= currentQuestionList.value.length) {
+            isFinished.value = true;
+          } else {
+            currentIndex.value++;
+            isChecked.value = false;
+            comment.value = '';
+            currentAnswer.value = '';
+            isSuccess.value = false;
           }
-          isChecked.value = false;
-          comment.value = '';
-          currentAnswer.value = '';
-          isSuccess.value = false;
         };
 
         return {
@@ -463,11 +460,14 @@
           selectedSheetIndex,
           onSheetChange,
           currentIndex,
+          currentQuestionList, // ★ テンプレートで length を使うため追加
           currentQuestion,
           currentComponent,
           isChecked,
           commentClass,
           comment,
+          correctCount, // ★ 追加
+          isFinished, // ★ 追加
           handleAnswerUpdate,
           checkAnswer,
           nextQuestion
