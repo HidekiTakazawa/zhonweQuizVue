@@ -269,7 +269,7 @@
   <script type="module">
     import { createApp, ref, computed, onMounted } from 'vue';
     import { components } from './js/index.js';
-    import { evaluatePronunciation, cleanText } from './js/utils.js';
+    import { evaluators } from './js/evaluators.js'; // ★ これを追加
 
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbyzFfeu2oD8BcLw1_LgQVB5P7ga1G_YeXncI3RyvBO_kTrrg5hyUGpzPbUDYuOnxKXx/exec';
 
@@ -350,92 +350,23 @@
         };
 
         const checkAnswer = () => {
-          // ★ Enter連打などで複数回判定されるのを防ぐ
+          // Enter連打などで複数回判定されるのを防ぐ
           if (isChecked.value) return;
-          
           isChecked.value = true;
+
           const type = currentQuestion.value[1]; 
+          
+          // evaluators辞書から該当タイプの評価関数を取得。なければDEFAULTを使う。
+          const evaluateFunc = evaluators[type] || evaluators.DEFAULT;
+          
+          // 評価を実行し、結果を受け取る
+          const result = evaluateFunc(currentQuestion.value, currentAnswer.value);
 
-          if (type === 'H') {
-            if (!currentAnswer.value) {
-              comment.value = '音声が入力されていません。';
-              isSuccess.value = false;
-            } else {
-              const targetText = currentQuestion.value[2].split('/')[0];
-              const result = evaluatePronunciation(targetText, currentAnswer.value);
-              comment.value = `スコア: ${result.score}点 - ${result.message}`;
-              isSuccess.value = result.score >= 80;
-            }
-          } 
-          else if (type === 'L') {
-            if (!currentAnswer.value) {
-              comment.value = '音声が入力されていません。';
-              isSuccess.value = false;
-            } else {
-              const answersData = currentQuestion.value.slice(5).filter(w => w !== undefined && w !== null && String(w).trim() !== '');
-              let matchedComment = null;
-              const cleanSpoken = cleanText(currentAnswer.value);
+          // 結果を画面に反映
+          isSuccess.value = result.isSuccess;
+          comment.value = result.comment;
 
-              for (const data of answersData) {
-                const parts = String(data).split('/');
-                const modelAnswer = cleanText(parts[0]);
-                const modelComment = parts[1] || '正解です！';
-                
-                if (modelAnswer === cleanSpoken) {
-                  matchedComment = modelComment;
-                  break;
-                }
-              }
-
-              if (matchedComment) {
-                comment.value = matchedComment;
-                isSuccess.value = true;
-              } else {
-                comment.value = '間違っています！　もっとしっかり勉強して。';
-                isSuccess.value = false;
-              }
-            }
-          } else if (type === 'M') {
-            let isCorrect = false;
-            console.log(currentAnswer.value, currentAnswer.value.split('/')[0]);
-            console.log(currentQuestion.value[2].split('/'));
-            const correctAnswers = currentQuestion.value[2].split('/');
-            if (correctAnswers.includes(currentAnswer.value.split('/')[0])) {
-              isCorrect = true;
-              comment.value = '大変よくできました。';
-              isSuccess.value = true;
-            } else {
-              comment.value = '間違っています！　もっとしっかり勉強して。';
-              isSuccess.value = false;
-
-            }
-           
-
-          } 
-          else {
-            let isCorrect = false;
-            if (type === 'E') {
-              const correctAnswers = currentQuestion.value[3].split('/');
-              if (correctAnswers.includes(currentAnswer.value)) {
-                isCorrect = true;
-              }
-            } else {
-              const correctAnswers = currentQuestion.value[2].split('/');
-              if (correctAnswers.includes(currentAnswer.value)) {
-                isCorrect = true;
-              }
-            }
-
-            if (isCorrect) {
-              comment.value = '大変よくできました。';
-              isSuccess.value = true;
-            } else {
-              comment.value = '間違っています！　もっとしっかり勉強して。';
-              isSuccess.value = false;
-            }
-          }
-
-          // ★ 正解ならカウントアップ
+          // 正解ならカウントアップ
           if (isSuccess.value) {
             correctCount.value++;
           }
