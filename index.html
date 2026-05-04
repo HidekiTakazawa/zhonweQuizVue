@@ -270,7 +270,7 @@
     import { createApp, ref, computed, onMounted } from 'vue';
     import { components } from './js/index.js';
     import { evaluators } from './js/evaluators.js'; // ★ これを追加
-
+    import { speakText } from './js/utils.js'; // ★ これを追加
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbyzFfeu2oD8BcLw1_LgQVB5P7ga1G_YeXncI3RyvBO_kTrrg5hyUGpzPbUDYuOnxKXx/exec';
 
     createApp({
@@ -372,10 +372,17 @@
           }
         };
 
+        // 
         const nextQuestion = () => {
-          // ★ 最後の問題だった場合、リザルト画面へ移行
+          // 最後の問題だった場合、リザルト画面へ移行
           if (currentIndex.value + 1 >= currentQuestionList.value.length) {
             isFinished.value = true;
+            
+            // ★ 満点なら「恭喜恭喜」と音声を流す
+            if (correctCount.value === currentQuestionList.length) {
+              speakText('恭喜恭喜');
+            }
+            
           } else {
             currentIndex.value++;
             isChecked.value = false;

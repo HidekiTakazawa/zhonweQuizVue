@@ -151,12 +151,12 @@ export const evaluatePronunciation = (targetText, spokenText) => {
 
   // 1. 中国語の文字列が完全一致する場合
   if (cleanTarget === cleanSpoken) {
-    return { score: 100, message: "完璧です！素晴らしい発音です。" };
+    return { score: 100, message: "完美！发音非常标准。" };
   }
 
   // pinyin-pro が読み込まれていない場合のフォールバック
   if (!window.pinyinPro) {
-    return { score: 0, message: "ピンイン変換ライブラリが読み込まれていません。" };
+    return { score: 0, message: "拼音转换库未加载。" };
   }
 
   // 2. ピンイン配列に変換して比較
@@ -166,7 +166,7 @@ export const evaluatePronunciation = (targetText, spokenText) => {
 
   // ピンインが完全一致する場合（同音異義語など）
   if (targetPinyinArr.join('') === spokenPinyinArr.join('')) {
-    return { score: 100, message: "完璧です！素晴らしい発音です。" };
+    return { score: 100, message: "完美！发音非常标准。" };
   }
 
   // 3. レーベンシュタイン距離で類似度を計算
@@ -177,14 +177,14 @@ export const evaluatePronunciation = (targetText, spokenText) => {
   let score = Math.round((1 - distance / maxLength) * 100);
   if (score < 0) score = 0;
 
-  // スコアに応じたメッセージ
+  // スコアに応じたメッセージ（中国語化）
   let message = "";
   if (score >= 80) {
-    message = "とても良いです！少しの修正で完璧になります。";
+    message = "非常好！稍加练习就完美了。";
   } else if (score >= 60) {
-    message = "惜しいです。もう少し練習しましょう。";
+    message = "很遗憾。再多练习一下吧。";
   } else {
-    message = "もう一度よく聞いて、発音してみましょう。";
+    message = "请再仔细听一遍，然后发音。";
   }
 
   return { score, message };
