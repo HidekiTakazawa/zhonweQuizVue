@@ -271,8 +271,7 @@
     import { components } from './js/index.js';
     import { evaluators } from './js/evaluators.js'; // ★ これを追加
     import { speakText } from './js/utils.js'; // ★ これを追加
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyzFfeu2oD8BcLw1_LgQVB5P7ga1G_YeXncI3RyvBO_kTrrg5hyUGpzPbUDYuOnxKXx/exec';
-
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyvKj_E4kJ9PoVNCHoLRCMenvGFrlOp1ITFlTwGZrTdFqW8EDIt4BwdT-WauUBnFb83Sw/exec';  
     createApp({
       components,
       setup() {
@@ -379,8 +378,10 @@
             isFinished.value = true;
             
             // ★ 満点なら「恭喜恭喜」と音声を流す
-            if (correctCount.value === currentQuestionList.length) {
-              speakText('恭喜恭喜');
+            if (correctCount.value === currentQuestionList.value.length) {
+              setTimeout(() => {
+                speakText('恭喜恭喜');
+              }, 300); // 300ミリ秒（0.3秒）遅らせてから発音させる
             }
             
           } else {
