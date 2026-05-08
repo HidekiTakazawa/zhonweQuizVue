@@ -100,6 +100,24 @@ const evaluateN = (questionData, currentAnswer) => {
   speakText(speech);
   return { isSuccess, comment };
 };
+// タイプOの評価（特殊処理）
+const evaluateO = (questionData, currentAnswer) => {
+  if (!currentAnswer) {
+    speakText("未回答");
+    return { isSuccess: false, comment: "未回答。" };
+  }
+
+  const expected = questionData[5];
+  console.log(`expected: ${expected}, currentAnswer: ${currentAnswer}`);
+ 
+  const isSuccess =  currentAnswer === expected;
+
+  const comment = isSuccess ? "好！赞👍" : "错×　再加油！！";
+  const speech = isSuccess ? "好！赞" : "错，再加油";
+
+  speakText(speech);
+  return { isSuccess, comment };
+};
 
 // --- 評価関数のマッピング（辞書） ---
 export const evaluators = {
@@ -109,4 +127,5 @@ export const evaluators = {
   L: evaluateL,
   M: evaluateM,
   N: evaluateN,
+  O: evaluateO,
 };

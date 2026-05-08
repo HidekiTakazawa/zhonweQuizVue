@@ -12,6 +12,7 @@ import QuestionK from "./QuestionK.js";
 import QuestionL from "./QuestionL.js";
 import QuestionM from "./QuestionM.js";
 import QuestionN from "./QuestionN.js";
+import QuestionO from "./QuestionO.js";
 // 今後 QuestionE, F... と増えてもここにインポートを追加するだけです
 export const components = {
   QuestionA,
@@ -28,6 +29,7 @@ export const components = {
   QuestionL,
   QuestionM,
   QuestionN,
+  QuestionO,
   // インデックス1のパターン名G,
   
   // インデックス1のパターン名（'A', 'B'...）とコンポーネント名を紐付けます
