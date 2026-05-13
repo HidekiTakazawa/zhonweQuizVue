@@ -52,7 +52,7 @@ export const useWordSort = (props, emit) => {
 
     }
     // タイプDとEの場合は、回答欄に1つしか置けないように制御
-    if (toList === answerList.value && (type === "D" || type === "E" || type === "I" || type === "J" || type === "K" || type === "M" || type === "N" || type === "O")) {
+    if (toList === answerList.value && (type === "D" || type === "E" || type === "I" || type === "J" || type === "K" || type === "M" || type === "N" || type === "O" || type === "O" || type === "P" || type === "Q" || type === "R" || type === "S")) {
       while (answerList.value.length > 0) {
         const removed = answerList.value.pop();
         poolList.value.push(removed);

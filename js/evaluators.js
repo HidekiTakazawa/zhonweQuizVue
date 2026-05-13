@@ -4,6 +4,7 @@ import { evaluatePronunciation, cleanText, speakText } from "./utils.js";
 
 // 標準的な評価（A, B, C, D, F, G, I, W など）
 const evaluateStandard = (questionData, currentAnswer) => {
+  
   const correctAnswers = questionData[2].split("/");
   const isSuccess = correctAnswers.includes(currentAnswer);
   const comment = isSuccess ? "好！赞👍" : "错×　再加油！！";
@@ -108,7 +109,6 @@ const evaluateO = (questionData, currentAnswer) => {
   }
 
   const expected = questionData[5];
-  console.log(`expected: ${expected}, currentAnswer: ${currentAnswer}`);
  
   const isSuccess =  currentAnswer === expected;
 
@@ -118,7 +118,12 @@ const evaluateO = (questionData, currentAnswer) => {
   speakText(speech);
   return { isSuccess, comment };
 };
+const evaluatePX = () => {
+  const isSuccess = true;
+  const comment = "";
+  return { isSuccess, comment };
 
+};
 // --- 評価関数のマッピング（辞書） ---
 export const evaluators = {
   DEFAULT: evaluateStandard,
@@ -128,4 +133,10 @@ export const evaluators = {
   M: evaluateM,
   N: evaluateN,
   O: evaluateO,
+  P: evaluateO,
+  Q: evaluateO,
+  R: evaluateO,
+  S: evaluateO,
+  PX: evaluatePX,
+  UX: evaluatePX,
 };

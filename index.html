@@ -356,6 +356,7 @@
           const type = currentQuestion.value[1]; 
           
           // evaluators辞書から該当タイプの評価関数を取得。なければDEFAULTを使う。
+          console.log(`evaluators[${type}]`);
           const evaluateFunc = evaluators[type] || evaluators.DEFAULT;
           
           // 評価を実行し、結果を受け取る
