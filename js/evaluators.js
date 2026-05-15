@@ -124,6 +124,24 @@ const evaluatePX = () => {
   return { isSuccess, comment };
 
 };
+// ★ タイプWの評価を追加
+const evaluateW = (questionData, currentAnswer) => {
+  if (!currentAnswer) {
+    speakText('未回答');
+    return { isSuccess: false, comment: '未回答。' };
+  }
+  
+  // 補正済みのデータから、1番目（質問文）を除外した残りを正解リストとする
+  const correctAnswers = questionData[2].split('/').slice(1);
+  const isSuccess = correctAnswers.includes(currentAnswer);
+  const comment = isSuccess ? '好！赞👍' : '错×　再加油！！';
+  const speech = isSuccess ? '好！赞' : '错，再加油';
+  
+  speakText(speech);
+  return { isSuccess, comment };
+};
+
+
 // --- 評価関数のマッピング（辞書） ---
 export const evaluators = {
   DEFAULT: evaluateStandard,
@@ -137,6 +155,8 @@ export const evaluators = {
   Q: evaluateO,
   R: evaluateO,
   S: evaluateO,
+  T: evaluateO,
+  W: evaluateW,
   PX: evaluatePX,
   UX: evaluatePX,
 };

@@ -17,6 +17,8 @@ import QuestionP from "./QuestionP.js";
 import QuestionQ from "./QuestionQ.js";
 import QuestionR from "./QuestionR.js";
 import QuestionS from "./QuestionS.js";
+import QuestionT from "./QuestionT.js";
+import QuestionW from "./QuestionW.js";
 import QuestionPX from "./QuestionPX.js";
 import QuestionUX from "./QuestionUX.js";
 // 今後 QuestionE, F... と増えてもここにインポートを追加するだけです
@@ -40,6 +42,8 @@ export const components = {
   QuestionQ,
   QuestionR,
   QuestionS,
+  QuestionT,
+  QuestionW,
   QuestionPX,
   QuestionUX,
   // インデックス1のパターン名G,

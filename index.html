@@ -270,7 +270,7 @@
     import { createApp, ref, computed, onMounted } from 'vue';
     import { components } from './js/index.js';
     import { evaluators } from './js/evaluators.js'; // ★ これを追加
-    import { speakText } from './js/utils.js'; // ★ これを追加
+    import { speakText, processTypeW } from './js/utils.js'; // ★ processTypeW を追加
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbyvKj_E4kJ9PoVNCHoLRCMenvGFrlOp1ITFlTwGZrTdFqW8EDIt4BwdT-WauUBnFb83Sw/exec';  
     createApp({
       components,
@@ -289,7 +289,7 @@
         // ★ 追加：成績管理用の変数
         const correctCount = ref(0);
         const isFinished = ref(false);
-
+        
         onMounted(async () => {
           try {
             const response = await fetch(GAS_URL);
@@ -322,11 +322,20 @@
           return allQuestions.value[selectedSheetIndex.value].filter(q => q[0] !== "");
         });
 
+        // const currentQuestion = computed(() => {
+        //   if (currentQuestionList.value.length === 0) return null;
+        //   return currentQuestionList.value[currentIndex.value];
+        // });
         const currentQuestion = computed(() => {
           if (currentQuestionList.value.length === 0) return null;
-          return currentQuestionList.value[currentIndex.value];
+          
+          // ★ コピーを作って、タイプWなら補正処理を通す
+          let q = [...currentQuestionList.value[currentIndex.value]];
+          if (q[1] === 'W') {
+            q = processTypeW(q);
+          }
+          return q;
         });
-
         const currentComponent = computed(() => {
           if (!currentQuestion.value) return null;
           const type = currentQuestion.value[1]; 

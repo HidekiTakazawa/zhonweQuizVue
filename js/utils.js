@@ -52,7 +52,7 @@ export const useWordSort = (props, emit) => {
 
     }
     // タイプDとEの場合は、回答欄に1つしか置けないように制御
-    if (toList === answerList.value && (type === "D" || type === "E" || type === "I" || type === "J" || type === "K" || type === "M" || type === "N" || type === "O" || type === "O" || type === "P" || type === "Q" || type === "R" || type === "S")) {
+    if (toList === answerList.value && (type === "D" || type === "E" || type === "I" || type === "J" || type === "K" || type === "M" || type === "N" || type === "O" || type === "O" || type === "P" || type === "Q" || type === "R" || type === " S" || type === "T")) {
       while (answerList.value.length > 0) {
         const removed = answerList.value.pop();
         poolList.value.push(removed);
@@ -188,4 +188,85 @@ export const evaluatePronunciation = (targetText, spokenText) => {
   }
 
   return { score, message };
+};
+// --- ここから下を追加 ---
+
+// タイプWのデータ補正処理（()をランダムな単語で埋める）
+export const processTypeW = (question) => {
+  const q = [...question]; // 元のデータを壊さないようにコピー
+  const hanyuParts = String(q[2]).split('/');
+  const riyuParts = String(q[4]).split('/');
+  
+  const hanyuQuestion = hanyuParts[0];
+  const numPlaceholders = (hanyuQuestion.match(/\(\)/g) || []).length;
+  
+  // F列以降の有効な選択肢を抽出
+  const validOptions = [];
+  for (let i = 5; i < q.length; i++) {
+    if (q[i] && String(q[i]).trim() !== "") {
+      validOptions.push(String(q[i]));
+    }
+  }
+
+  if (validOptions.length === 0 || numPlaceholders === 0) {
+    return q; // 補正できない場合はそのまま返す
+  }
+
+  // ランダムに選択肢を選ぶ
+  const selectedOptions = [];
+  const optionsCopy = [...validOptions];
+  for (let i = 0; i < numPlaceholders; i++) {
+    if (optionsCopy.length > 0) {
+      const randomIndex = Math.floor(Math.random() * optionsCopy.length);
+      const selectedOptionRaw = optionsCopy.splice(randomIndex, 1)[0];
+      const parts = selectedOptionRaw.split('/');
+      if (parts.length >= 3) {
+        selectedOptions.push(parts); // [中国語, ピンイン, 日本語]
+      } else {
+        selectedOptions.push(["无", "wú", "なし"]);
+      }
+    } else {
+      selectedOptions.push(["无", "wú", "なし"]);
+    }
+  }
+
+  // 中国語の補正
+  let hoseiHanyuQuestion = hanyuParts[0];
+  for (let i = 0; i < numPlaceholders; i++) {
+    hoseiHanyuQuestion = hoseiHanyuQuestion.replace('()', selectedOptions[i][0]);
+  }
+  const hoseiHanyu = [hoseiHanyuQuestion];
+
+  for (let i = 1; i < hanyuParts.length; i++) {
+    if (hanyuParts[i].includes('()')) {
+      for (let j = 0; j < selectedOptions.length; j++) {
+        let hoseiAnswer = hanyuParts[i].replace('()', selectedOptions[j][0]);
+        hoseiHanyu.push(hoseiAnswer);
+      }
+    } else {
+      hoseiHanyu.push(hanyuParts[i]);
+    }
+  }
+  q[2] = hoseiHanyu.join('/'); // 補正済みの中国語文章で上書き
+
+  // 日本語の補正
+  let hoseiRiyuQuestion = riyuParts[0];
+  for (let i = 0; i < numPlaceholders; i++) {
+    hoseiRiyuQuestion = hoseiRiyuQuestion.replace('()', selectedOptions[i][2]);
+  }
+  const hoseiRiyu = [hoseiRiyuQuestion];
+
+  for (let i = 1; i < riyuParts.length; i++) {
+    if (riyuParts[i].includes('()')) {
+      for (let j = 0; j < selectedOptions.length; j++) {
+        let hoseiAnswer = riyuParts[i].replace('()', selectedOptions[j][2]);
+        hoseiRiyu.push(hoseiAnswer);
+      }
+    } else {
+      hoseiRiyu.push(riyuParts[i]);
+    }
+  }
+  q[4] = hoseiRiyu.join('/'); // 補正済みの日本語訳で上書き
+
+  return q;
 };
