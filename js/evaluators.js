@@ -1,4 +1,4 @@
-import { evaluatePronunciation, cleanText, speakText } from "./utils.js";
+import { evaluatePronunciation, cleanText, speakText, evaluateXAnswer } from "./utils.js";
 
 // --- 各タイプの評価ロジック ---
 
@@ -133,7 +133,29 @@ const evaluateW = (questionData, currentAnswer) => {
   
   // 補正済みのデータから、1番目（質問文）を除外した残りを正解リストとする
   const correctAnswers = questionData[2].split('/').slice(1);
-  const isSuccess = correctAnswers.includes(currentAnswer);
+   // ★ 句読点やスペースを無視して比較する（cleanTextを使用）
+  const cleanCurrentAnswer = cleanText(currentAnswer);
+  const isSuccess = correctAnswers.some(ans => cleanText(ans) === cleanCurrentAnswer);
+  const comment = isSuccess ? '好！赞👍' : '错×　再加油！！';
+  const speech = isSuccess ? '好！赞' : '错，再加油';
+  
+  speakText(speech);
+  return { isSuccess, comment };
+};
+// ★ タイプXの評価を追加
+const evaluateX = (questionData, currentAnswer) => {
+  if (!currentAnswer) {
+    speakText('未回答');
+    return { isSuccess: false, comment: '未回答。' };
+  }
+  
+  // 補正済みのデータから、1番目（質問文）を除外した残りを正解リストとする
+  const correctAnswers = questionData[2].split('/').slice(1);
+   // ★ 句読点やスペースを無視して比較する（cleanTextを使用）
+  const cleanCurrentAnswer = cleanText(currentAnswer);
+  const isSuccess = evaluateXAnswer(correctAnswers, cleanCurrentAnswer, questionData);
+  
+  // const isSuccess = correctAnswers.some(ans => cleanText(ans) === cleanCurrentAnswer);
   const comment = isSuccess ? '好！赞👍' : '错×　再加油！！';
   const speech = isSuccess ? '好！赞' : '错，再加油';
   
@@ -157,6 +179,7 @@ export const evaluators = {
   S: evaluateO,
   T: evaluateO,
   W: evaluateW,
+  X: evaluateX,
   PX: evaluatePX,
   UX: evaluatePX,
 };

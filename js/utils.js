@@ -270,3 +270,26 @@ export const processTypeW = (question) => {
 
   return q;
 };
+export const evaluateXAnswer = (correctAnswers, cleanCurrentAnswer, questionData) => {
+  // F列以降の有効な選択肢を抽出
+  console.log(`cleanCurrentAnswer: ${cleanCurrentAnswer}`);
+  console.log(`correctAnswers: ${correctAnswers}`);
+  const validOptions = [];
+  for (let i = 5; i < questionData.length; i++) {
+    if (questionData[i] && String(questionData[i]).trim() !== "") {
+      const parts = questionData[i].split('/');
+      validOptions.push(parts);
+    }
+  }
+  for (let i = 0; i < validOptions.length; i++) {
+    for (let j = 0; j < correctAnswers.length; j++) {
+      const correctAnswer = cleanText(correctAnswers[j].replace("()", validOptions[i][0]));
+      if (correctAnswer === cleanCurrentAnswer) {
+        return true;
+      }
+    
+    }
+      
+  }
+  return false;
+};
