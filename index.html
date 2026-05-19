@@ -65,7 +65,6 @@
       cursor: pointer;
     }
 
-    /* ★ 問題番号表示のスタイル */
     .progress-text {
       text-align: left;
       font-size: 0.9rem;
@@ -76,7 +75,6 @@
       padding-bottom: 10px;
     }
 
-    /* ★ リザルト画面のスタイル */
     .result-screen {
       text-align: center;
       padding: 20px 0;
@@ -235,38 +233,38 @@
         </select>
       </div>
 
-      <!-- ★ リザルト画面 -->
+      <!-- リザルト画面 -->
       <div v-if="isFinished" class="result-screen">
         <h2>テスト終了！</h2>
         <p>正解数： {{ correctCount }} / {{ currentQuestionList.length }}</p>
         <p>正答率： {{ Math.round((correctCount / currentQuestionList.length) * 100) }}%</p>
-        <h3 v-if="correctCount === currentQuestionList.length" class="perfect-msg">🎉 おめでとうございます！満点です！ 🎉</h3>
-        <button @click="onSheetChange" style="margin-top: 20px;">もう一度解く</button>
+        <h3 v-if="correctCount === currentQuestionList.length" class="perfect-msg">🎉 恭喜恭喜!! 🎉</h3>
+        
+        <!-- ★ 学習記録コピーボタンを追加 -->
+        <div style="margin-top: 30px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+          <button @click="copyHistoryToClipboard" style="background-color: #10b981;">学習記録をコピー</button>
+          <button @click="onSheetChange">もう一度解く</button>
+        </div>
       </div>
 
       <!-- 問題画面 -->
       <div v-else>
-        <!-- ★ 問題番号表示 -->
         <div v-if="currentQuestion" class="progress-text">
           問題番号： {{ currentIndex + 1 }} / {{ currentQuestionList.length }}
         </div>
 
         <div id="container" v-if="currentQuestion">
-          <!-- ★ @submit="checkAnswer" を追加 -->
           <component :is="currentComponent" :question-data="currentQuestion" :is-checked="isChecked"
             @update-answer="handleAnswerUpdate" @submit="checkAnswer"></component>
         </div>
 
         <p id="comment" :class="commentClass">{{ comment }}</p>
         <div class="controls">
-        <!-- PXの時は「次に進む」、それ以外は「チェック」と表示 -->
-        <button v-if="!isChecked && currentQuestion" @click="checkAnswer">
-          {{ isTypePX ? '次に進む' : 'チェック' }}
-        </button>
-        
-        <!-- PX以外の時だけ、チェック後に「次の問題」ボタンを表示 -->
-        <button v-if="isChecked && currentQuestion && !isTypePX" @click="nextQuestion">次の問題</button>
-      </div>
+          <button v-if="!isChecked && currentQuestion" @click="checkAnswer">
+             {{ isTypePX ? '次に進む' : 'チェック' }}
+          </button>
+          <button v-if="isChecked && currentQuestion && !isTypePX" @click="nextQuestion">次の問題</button>
+        </div>
       </div>
     </div>
   </div>
@@ -274,9 +272,11 @@
   <script type="module">
     import { createApp, ref, computed, onMounted } from 'vue';
     import { components } from './js/index.js';
-    import { evaluators } from './js/evaluators.js'; // ★ これを追加
-    import { speakText, processTypeW } from './js/utils.js'; // ★ processTypeW を追加
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyvKj_E4kJ9PoVNCHoLRCMenvGFrlOp1ITFlTwGZrTdFqW8EDIt4BwdT-WauUBnFb83Sw/exec';  
+    import { evaluators } from './js/evaluators.js';
+    import { speakText, processTypeW } from './js/utils.js';
+
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyvKj_E4kJ9PoVNCHoLRCMenvGFrlOp1ITFlTwGZrTdFqW8EDIt4BwdT-WauUBnFb83Sw/exec';
+
     createApp({
       components,
       setup() {
@@ -291,10 +291,12 @@
         const currentAnswer = ref('');
         const isSuccess = ref(false);
         
-        // ★ 追加：成績管理用の変数
         const correctCount = ref(0);
         const isFinished = ref(false);
         const isTypePX = ref(false);
+        // ★ 学習履歴管理用の変数
+        const learningHistory = ref([]);
+        const startTime = ref('');
 
         onMounted(async () => {
           try {
@@ -303,7 +305,9 @@
 
             sheets.value = data[0];
             allQuestions.value = data.slice(1);
-
+            
+            // 初回起動時の時間を記録
+            startTime.value = new Date().toLocaleString('ja-JP');
             isLoading.value = false;
           } catch (error) {
             console.error('データの取得に失敗しました:', error);
@@ -318,9 +322,12 @@
           comment.value = '';
           currentAnswer.value = '';
           isSuccess.value = false;
-          // ★ リセット
           correctCount.value = 0;
           isFinished.value = false;
+
+          // ★ シート変更時に履歴と時間をリセット
+          learningHistory.value = [];
+          startTime.value = new Date().toLocaleString('ja-JP');
         };
 
         const currentQuestionList = computed(() => {
@@ -328,30 +335,25 @@
           return allQuestions.value[selectedSheetIndex.value].filter(q => q[0] !== "");
         });
 
-        // const currentQuestion = computed(() => {
-        //   if (currentQuestionList.value.length === 0) return null;
-        //   return currentQuestionList.value[currentIndex.value];
-        // });
         const currentQuestion = computed(() => {
           if (currentQuestionList.value.length === 0) return null;
-          
-          // ★ コピーを作って、タイプWなら補正処理を通す
           let q = [...currentQuestionList.value[currentIndex.value]];
           if (q[1] === 'W') {
             q = processTypeW(q);
           }
           return q;
         });
+
         const currentComponent = computed(() => {
           if (!currentQuestion.value) return null;
           const type = currentQuestion.value[1]; 
+          
           if (type === 'PX' || type === 'UX' || type === 'V') {
             isTypePX.value = true;
             
           } else {
             isTypePX.value = false;
           }
-          
           const componentName = `Question${type}`;
           if (type >= 'A' && type <= 'Z' && components[componentName]) {
             return componentName;
@@ -370,49 +372,46 @@
         };
 
         const checkAnswer = () => {
-          // Enter連打などで複数回判定されるのを防ぐ
           if (isChecked.value) return;
           isChecked.value = true;
 
           const type = currentQuestion.value[1]; 
           
-          // evaluators辞書から該当タイプの評価関数を取得。なければDEFAULTを使う。
-          console.log(`evaluators[${type}]`);
           const evaluateFunc = evaluators[type] || evaluators.DEFAULT;
-          
-          // 評価を実行し、結果を受け取る
           const result = evaluateFunc(currentQuestion.value, currentAnswer.value);
 
-          // 結果を画面に反映
           isSuccess.value = result.isSuccess;
           comment.value = result.comment;
 
-          // 正解ならカウントアップ
           if (isSuccess.value) {
             correctCount.value++;
           }
-          // ★ タイプPXの場合は、チェック状態を見せずにすぐに次の問題へ進む
-          // if (type === 'PX') {
-          //   nextQuestion();
-          // }
+
+          // ★ 評価が終わった直後に履歴を保存
+          learningHistory.value.push({
+            type: type,
+            chinese: currentQuestion.value[2],
+            pinyin: currentQuestion.value[3],
+            japanese: currentQuestion.value[4],
+            userAnswer: type === 'PX' ? '(リスニングのみ)' : (currentAnswer.value || '未回答'),
+            evaluation: isSuccess.value ? '正解' : '不正解',
+            comment: comment.value
+          });
+
           if (isTypePX.value) {
             nextQuestion();
           }
         };
 
-        // 
         const nextQuestion = () => {
-          // 最後の問題だった場合、リザルト画面へ移行
           if (currentIndex.value + 1 >= currentQuestionList.value.length) {
             isFinished.value = true;
             
-            // ★ 満点なら「恭喜恭喜」と音声を流す
             if (correctCount.value === currentQuestionList.value.length) {
               setTimeout(() => {
                 speakText('恭喜恭喜');
-              }, 300); // 300ミリ秒（0.3秒）遅らせてから発音させる
+              }, 300);
             }
-            
           } else {
             currentIndex.value++;
             isChecked.value = false;
@@ -422,24 +421,51 @@
           }
         };
 
+        // ★ クリップボードにコピーする関数
+        const copyHistoryToClipboard = async () => {
+          let text = `【中国語 学習記録】\n`;
+          text += `開始日時: ${startTime.value}\n`;
+          text += `シート名: ${sheets.value[selectedSheetIndex.value]}\n`;
+          text += `正解数: ${correctCount.value} / ${currentQuestionList.value.length}\n`;
+          text += `正答率: ${Math.round((correctCount.value / currentQuestionList.value.length) * 100)}%\n\n`;
+
+          learningHistory.value.forEach((item, index) => {
+            text += `--- 問題${index + 1} (タイプ: ${item.type}) ---\n`;
+            text += `中国語: ${item.chinese}\n`;
+            text += `ピンイン: ${item.pinyin}\n`;
+            text += `日本語: ${item.japanese}\n`;
+            text += `あなたの回答: ${item.userAnswer}\n`;
+            text += `評価: ${item.evaluation} (${item.comment})\n\n`;
+          });
+
+          try {
+            await navigator.clipboard.writeText(text);
+            alert('学習記録をクリップボードにコピーしました！\nメモ帳や提出フォームに貼り付けてください。');
+          } catch (err) {
+            alert('コピーに失敗しました。ブラウザの権限を確認してください。');
+            console.error('Clipboard copy failed:', err);
+          }
+        };
+
         return {
           isLoading,
           sheets,
           selectedSheetIndex,
           onSheetChange,
           currentIndex,
-          currentQuestionList, // ★ テンプレートで length を使うため追加
+          currentQuestionList,
           currentQuestion,
           currentComponent,
           isChecked,
           commentClass,
           comment,
-          correctCount, // ★ 追加
-          isFinished, // ★ 追加
+          correctCount,
+          isFinished,
           isTypePX, // ★ 追加
           handleAnswerUpdate,
           checkAnswer,
-          nextQuestion
+          nextQuestion,
+          copyHistoryToClipboard // ★ テンプレートに公開
         };
       }
     }).mount('#app');
