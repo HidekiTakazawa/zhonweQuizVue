@@ -261,11 +261,11 @@
         <div class="controls">
         <!-- PXの時は「次に進む」、それ以外は「チェック」と表示 -->
         <button v-if="!isChecked && currentQuestion" @click="checkAnswer">
-          {{ currentQuestion[1] === 'PX' ? '次に進む' : 'チェック' }}
+          {{ isTypePX ? '次に進む' : 'チェック' }}
         </button>
         
         <!-- PX以外の時だけ、チェック後に「次の問題」ボタンを表示 -->
-        <button v-if="isChecked && currentQuestion && currentQuestion[1] !== 'PX'" @click="nextQuestion">次の問題</button>
+        <button v-if="isChecked && currentQuestion && !isTypePX" @click="nextQuestion">次の問題</button>
       </div>
       </div>
     </div>
@@ -392,7 +392,10 @@
             correctCount.value++;
           }
           // ★ タイプPXの場合は、チェック状態を見せずにすぐに次の問題へ進む
-          if (type === 'PX') {
+          // if (type === 'PX') {
+          //   nextQuestion();
+          // }
+          if (isTypePX.value) {
             nextQuestion();
           }
         };
@@ -433,6 +436,7 @@
           comment,
           correctCount, // ★ 追加
           isFinished, // ★ 追加
+          isTypePX, // ★ 追加
           handleAnswerUpdate,
           checkAnswer,
           nextQuestion

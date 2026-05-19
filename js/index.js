@@ -18,6 +18,7 @@ import QuestionQ from "./QuestionQ.js";
 import QuestionR from "./QuestionR.js";
 import QuestionS from "./QuestionS.js";
 import QuestionT from "./QuestionT.js";
+import QuestionV from "./QuestionV.js";
 import QuestionW from "./QuestionW.js";
 import QuestionX from "./QuestionX.js";
 import QuestionPX from "./QuestionPX.js";
@@ -44,6 +45,7 @@ export const components = {
   QuestionR,
   QuestionS,
   QuestionT,
+  QuestionV,
   QuestionW,
   QuestionX,
   QuestionPX,

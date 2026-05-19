@@ -182,4 +182,5 @@ export const evaluators = {
   X: evaluateX,
   PX: evaluatePX,
   UX: evaluatePX,
+  V: evaluatePX,
 };
