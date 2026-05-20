@@ -219,7 +219,7 @@
 <body>
 
   <div id="app">
-    <h1>中国語　問題集</h1>
+    <h1>中国語 問題集</h1>
 
     <div v-if="isLoading" class="loading">
       スプレッドシートからデータを読み込み中...
@@ -236,11 +236,11 @@
       <!-- リザルト画面 -->
       <div v-if="isFinished" class="result-screen">
         <h2>テスト終了！</h2>
-        <p>正解数： {{ correctCount }} / {{ currentQuestionList.length }}</p>
-        <p>正答率： {{ Math.round((correctCount / currentQuestionList.length) * 100) }}%</p>
-        <h3 v-if="correctCount === currentQuestionList.length" class="perfect-msg">🎉 恭喜恭喜!! 🎉</h3>
-        
-        <!-- ★ 学習記録コピーボタンを追加 -->
+        <!-- ★ 分母を totalQuestionsCount に変更 -->
+        <p>正解数： {{ correctCount }} / {{ totalQuestionsCount }}</p>
+        <p v-if="totalQuestionsCount > 0">正答率： {{ Math.round((correctCount / totalQuestionsCount) * 100) }}%</p>
+        <h3 v-if="totalQuestionsCount > 0 && correctCount === totalQuestionsCount" class="perfect-msg">🎉 恭喜恭喜!! 🎉</h3>
+       
         <div style="margin-top: 30px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
           <button @click="copyHistoryToClipboard" style="background-color: #10b981;">学習記録をコピー</button>
           <button @click="onSheetChange">もう一度解く</button>
@@ -250,7 +250,7 @@
       <!-- 問題画面 -->
       <div v-else>
         <div v-if="currentQuestion" class="progress-text">
-          問題番号： {{ currentIndex + 1 }} / {{ currentQuestionList.length }}
+          進行状況： {{ currentIndex + 1 }} / {{ currentQuestionList.length }}
         </div>
 
         <div id="container" v-if="currentQuestion">
@@ -290,11 +290,11 @@
         const comment = ref('');
         const currentAnswer = ref('');
         const isSuccess = ref(false);
-        
+       
         const correctCount = ref(0);
         const isFinished = ref(false);
         const isTypePX = ref(false);
-        // ★ 学習履歴管理用の変数
+        
         const learningHistory = ref([]);
         const startTime = ref('');
 
@@ -305,8 +305,7 @@
 
             sheets.value = data[0];
             allQuestions.value = data.slice(1);
-            
-            // 初回起動時の時間を記録
+           
             startTime.value = new Date().toLocaleString('ja-JP');
             isLoading.value = false;
           } catch (error) {
@@ -325,7 +324,6 @@
           correctCount.value = 0;
           isFinished.value = false;
 
-          // ★ シート変更時に履歴と時間をリセット
           learningHistory.value = [];
           startTime.value = new Date().toLocaleString('ja-JP');
         };
@@ -333,6 +331,14 @@
         const currentQuestionList = computed(() => {
           if (allQuestions.value.length === 0) return [];
           return allQuestions.value[selectedSheetIndex.value].filter(q => q[0] !== "");
+        });
+
+        // ★ 実際の「問題」の数（PX, UX, V を除く）を計算する
+        const totalQuestionsCount = computed(() => {
+          return currentQuestionList.value.filter(q => {
+            const type = q[1];
+            return type !== 'PX' && type !== 'UX' && type !== 'V';
+          }).length;
         });
 
         const currentQuestion = computed(() => {
@@ -346,14 +352,14 @@
 
         const currentComponent = computed(() => {
           if (!currentQuestion.value) return null;
-          const type = currentQuestion.value[1]; 
-          
+          const type = currentQuestion.value[1];
+         
           if (type === 'PX' || type === 'UX' || type === 'V') {
             isTypePX.value = true;
-            
           } else {
             isTypePX.value = false;
           }
+          
           const componentName = `Question${type}`;
           if (type >= 'A' && type <= 'Z' && components[componentName]) {
             return componentName;
@@ -375,27 +381,28 @@
           if (isChecked.value) return;
           isChecked.value = true;
 
-          const type = currentQuestion.value[1]; 
-          
+          const type = currentQuestion.value[1];
+         
           const evaluateFunc = evaluators[type] || evaluators.DEFAULT;
           const result = evaluateFunc(currentQuestion.value, currentAnswer.value);
 
           isSuccess.value = result.isSuccess;
           comment.value = result.comment;
 
-          if (isSuccess.value) {
+          // ★ PX, UX, V 以外で正解した場合のみカウントアップ
+          if (isSuccess.value && !isTypePX.value) {
             correctCount.value++;
           }
 
-          // ★ 評価が終わった直後に履歴を保存
+          // ★ 履歴保存（PX系の場合は評価を「-」にする）
           learningHistory.value.push({
             type: type,
             chinese: currentQuestion.value[2],
             pinyin: currentQuestion.value[3],
             japanese: currentQuestion.value[4],
-            userAnswer: type === 'PX' ? '(リスニングのみ)' : (currentAnswer.value || '未回答'),
-            evaluation: isSuccess.value ? '正解' : '不正解',
-            comment: comment.value
+            userAnswer: isTypePX.value ? '(閲覧・リスニングのみ)' : (currentAnswer.value || '未回答'),
+            evaluation: isTypePX.value ? '-' : (isSuccess.value ? '正解' : '不正解'),
+            comment: isTypePX.value ? '-' : comment.value
           });
 
           if (isTypePX.value) {
@@ -406,8 +413,9 @@
         const nextQuestion = () => {
           if (currentIndex.value + 1 >= currentQuestionList.value.length) {
             isFinished.value = true;
-            
-            if (correctCount.value === currentQuestionList.value.length) {
+           
+            // ★ 満点判定を totalQuestionsCount に変更
+            if (totalQuestionsCount.value > 0 && correctCount.value === totalQuestionsCount.value) {
               setTimeout(() => {
                 speakText('恭喜恭喜');
               }, 300);
@@ -421,21 +429,25 @@
           }
         };
 
-        // ★ クリップボードにコピーする関数
         const copyHistoryToClipboard = async () => {
           let text = `【中国語 学習記録】\n`;
           text += `開始日時: ${startTime.value}\n`;
           text += `シート名: ${sheets.value[selectedSheetIndex.value]}\n`;
-          text += `正解数: ${correctCount.value} / ${currentQuestionList.value.length}\n`;
-          text += `正答率: ${Math.round((correctCount.value / currentQuestionList.value.length) * 100)}%\n\n`;
+          text += `正解数: ${correctCount.value} / ${totalQuestionsCount.value}\n`;
+          
+          if (totalQuestionsCount.value > 0) {
+            text += `正答率: ${Math.round((correctCount.value / totalQuestionsCount.value) * 100)}%\n\n`;
+          } else {
+            text += `正答率: -\n\n`;
+          }
 
           learningHistory.value.forEach((item, index) => {
-            text += `--- 問題${index + 1} (タイプ: ${item.type}) ---\n`;
+            text += `--- ステップ${index + 1} (タイプ: ${item.type}) ---\n`;
             text += `中国語: ${item.chinese}\n`;
             text += `ピンイン: ${item.pinyin}\n`;
             text += `日本語: ${item.japanese}\n`;
             text += `あなたの回答: ${item.userAnswer}\n`;
-            text += `評価: ${item.evaluation} (${item.comment})\n\n`;
+            text += `評価: ${item.evaluation} ${item.comment !== '-' ? '(' + item.comment + ')' : ''}\n\n`;
           });
 
           try {
@@ -454,6 +466,7 @@
           onSheetChange,
           currentIndex,
           currentQuestionList,
+          totalQuestionsCount, // ★ 追加
           currentQuestion,
           currentComponent,
           isChecked,
@@ -461,11 +474,11 @@
           comment,
           correctCount,
           isFinished,
-          isTypePX, // ★ 追加
+          isTypePX,
           handleAnswerUpdate,
           checkAnswer,
           nextQuestion,
-          copyHistoryToClipboard // ★ テンプレートに公開
+          copyHistoryToClipboard
         };
       }
     }).mount('#app');
