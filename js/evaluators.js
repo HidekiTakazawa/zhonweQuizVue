@@ -4,15 +4,27 @@ import { evaluatePronunciation, cleanText, speakText, evaluateXAnswer } from "./
 
 // 標準的な評価（A, B, C, D, F, G, I, W など）
 const evaluateStandard = (questionData, currentAnswer) => {
-  
-  const correctAnswers = questionData[2].split("/");
-  const isSuccess = correctAnswers.includes(currentAnswer);
-  const comment = isSuccess ? "好！赞👍" : "错×　再加油！！";
-  const speech = isSuccess ? "好！赞" : "错，再加油"; // 読み上げ用（絵文字なし）
+  if (!currentAnswer) {
+    speakText('未回答');
+    return { isSuccess: false, comment: '未回答。' };
+  }
 
-  speakText(speech); // ★ 音声出力
+  const cleanCurrentAnswer = cleanText(currentAnswer);
+  
+  // スプレッドシートの正解リスト（/区切り）をすべてクリーンにする
+  const correctAnswers = questionData[2].split('/').map(ans => cleanText(ans));
+  
+  console.log("ユーザー入力(クリーン後):", cleanCurrentAnswer);
+  console.log("正解リスト(クリーン後):", correctAnswers);
+
+  const isSuccess = correctAnswers.includes(cleanCurrentAnswer);
+  const comment = isSuccess ? '好！赞👍' : '错×　再加油！！';
+  const speech = isSuccess ? '好！赞' : '错，再加油';
+  
+  speakText(speech);
   return { isSuccess, comment };
 };
+
 
 // タイプEの評価
 const evaluateE = (questionData, currentAnswer) => {

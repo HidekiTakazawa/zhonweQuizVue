@@ -113,10 +113,10 @@ export const useWordSort = (props, emit) => {
   return { poolList, answerList, answerContainer, moveWord };
 };
 // --- ここから下を追加 ---
-
-// 句読点や記号を除去する関数
 export const cleanText = (text) => {
-  return text.replace(/[，。？！、,.\?!]/g, '').trim();
+  if (!text) return '';
+  // 全角・半角のスペース、句読点、疑問符、感嘆符などをすべて除去
+  return String(text).replace(/[，。？！、,.\?! 　]/g, '').trim();
 };
 
 // レーベンシュタイン距離（配列同士の比較）

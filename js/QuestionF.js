@@ -2,7 +2,7 @@ import { ref, watch, onMounted, nextTick } from "vue";
 import { useWordSort, speakText } from "./utils.js";
 export default {
   props: ["questionData", "isChecked"],
-  emits: ["update-answer"],
+  emits: ["update-answer", "submit"], // ★ "submit" を追加
   setup(props, { emit }) {
     const { poolList } = useWordSort(props, emit);
     const textAnswer = ref("");
