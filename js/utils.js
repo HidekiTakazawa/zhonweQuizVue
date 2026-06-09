@@ -1,11 +1,48 @@
 import { ref, watch, onMounted, nextTick } from "vue";
 
-// 音声再生ヘルパー関数
+// --- 音声リストを保持する変数 ---
+let availableVoices = [];
+
+// 音声リストを読み込む関数（iOS Safari対策）
+const loadVoices = () => {
+  availableVoices = speechSynthesis.getVoices();
+};
+
+// ブラウザの音声リストが準備できたら読み込む
+if (typeof speechSynthesis !== 'undefined') {
+  // 初回実行
+  loadVoices();
+  // 音声リストが非同期でロードされた時のイベント
+  if (speechSynthesis.onvoiceschanged !== undefined) {
+    speechSynthesis.onvoiceschanged = loadVoices;
+  }
+}
+
+// --- 音声再生ヘルパー関数 ---
 export const speakText = (text) => {
   if (!text) return;
   const textToSpeak = text.split("/")[0];
   const uttr = new SpeechSynthesisUtterance(textToSpeak);
+  
+  // 基本の言語設定
   uttr.lang = "zh-CN";
+
+  // もし音声リストが空なら再取得を試みる
+  if (availableVoices.length === 0) {
+    availableVoices = speechSynthesis.getVoices();
+  }
+
+  // ★ 明示的に中国語の「声」を探してセットする（iOS対策）
+  const zhVoice = availableVoices.find(voice => 
+    voice.lang === 'zh-CN' || 
+    voice.lang === 'zh_CN' || 
+    voice.lang.includes('zh')
+  );
+  
+  if (zhVoice) {
+    uttr.voice = zhVoice;
+  }
+
   speechSynthesis.cancel();
   speechSynthesis.speak(uttr);
 };
